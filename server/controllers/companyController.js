@@ -1,5 +1,5 @@
 import Company from "../models/Company.js";
-import bcrypt from 'bcrypt'
+import bcrypt from 'bcryptjs'
 import { v2 as cloudinary } from 'cloudinary'
 import generateToken from "../utils/generateToken.js";
 import Job from "../models/Job.js";
@@ -54,35 +54,43 @@ export const registerCompany = async (req, res) => {
 
 // Login Company
 export const loginCompany = async (req, res) => {
-
     const { email, password } = req.body
 
     try {
-
         const company = await Company.findOne({ email })
 
-        if (await bcrypt.compare(password, company.password)) {
-
-            res.json({
-                success: true,
-                company: {
-                    _id: company._id,
-                    name: company.name,
-                    email: company.email,
-                    image: company.image
-                },
-                token: generateToken(company._id)
+        // 🔴 FIX #1: company existence check
+        if (!company) {
+            return res.json({
+                success: false,
+                message: "Invalid email or password"
             })
+        }
 
+        // 🔴 FIX #2: password comparison
+        const isMatch = await bcrypt.compare(password, company.password)
+
+        if (!isMatch) {
+            return res.json({
+                success: false,
+                message: "Invalid email or password"
+            })
         }
-        else {
-            res.json({ success: false, message: 'Invalid email or password' })
-        }
+
+        res.json({
+            success: true,
+            company: {
+                _id: company._id,
+                name: company.name,
+                email: company.email,
+                image: company.image
+            },
+            token: generateToken(company._id)
+        })
 
     } catch (error) {
         res.json({ success: false, message: error.message })
     }
-
 }
 
 // Get Company Data
