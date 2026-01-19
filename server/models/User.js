@@ -5,7 +5,10 @@ const userSchema = new mongoose.Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     resume: { type: String },
-    image: { type: String, required: true }
+    image: { 
+        type: String, 
+        default: "https://via.placeholder.com/150" //use a URL to a generic avatar
+    }
 })
 
 const User = mongoose.model('User', userSchema)

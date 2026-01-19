@@ -20,8 +20,8 @@ const Applications = () => {
   const { backendUrl, userData, userApplications, fetchUserData, fetchUserApplications } = useContext(AppContext)
 
   const updateResume = async () => {
-
     try {
+      if (!resume) return toast.error("Please select a file first")
 
       const formData = new FormData()
       formData.append('resume', resume)
@@ -36,16 +36,14 @@ const Applications = () => {
       if (data.success) {
         toast.success(data.message)
         await fetchUserData()
+        setIsEdit(false) 
+        setResume(null)
       } else {
         toast.error(data.message)
       }
-
     } catch (error) {
       toast.error(error.message)
     }
-
-    setIsEdit(false)
-    setResume(null)
   }
 
   useEffect(() => {
@@ -60,26 +58,41 @@ const Applications = () => {
       <div className='container px-4 min-h-[65vh] 2xl:px-20 mx-auto my-10'>
         <h2 className='text-xl font-semibold'>Your Resume</h2>
         <div className='flex gap-2 mb-6 mt-3'>
+          
+          {/* ALWAYS show the existing resume link if it exists in the database */}
+          {userData.resume && (
+            <a target='_blank' rel='noopener noreferrer' href={userData.resume} className='bg-blue-100 text-blue-600 px-4 py-2 rounded-lg'>
+              View Current Resume
+            </a>
+          )}
+
+          {/* Logic to toggle between 'Edit' button and the Upload inputs */}
           {
-            isEdit || userData && userData.resume === ""
-              ? <>
+            isEdit || (userData && !userData.resume)
+              ? <div className='flex items-center gap-2'>
                 <label className='flex items-center' htmlFor="resumeUpload">
-                  <p className='bg-blue-100 text-blue-600 px-4 py-2 rounded-lg mr-2'>{resume ? resume.name : "Select Resume"}</p>
+                  <p className='bg-blue-100 text-blue-600 px-4 py-2 rounded-lg mr-2'>
+                    {resume ? resume.name : "Select New File"}
+                  </p>
                   <input id='resumeUpload' onChange={e => setResume(e.target.files[0])} accept='application/pdf' type="file" hidden />
-                  <img src={assets.profile_upload_icon} alt="" />
+                  <img src={assets.profile_upload_icon} alt="" className='cursor-pointer' />
                 </label>
-                <button onClick={updateResume} className='bg-green-100 border border-green-400 rounded-lg px-4 py-2'>Save</button>
-              </>
-              : <div className='flex gap-2'>
-                <a target='_blank' href={userData.resume} className='bg-blue-100 text-blue-600 px-4 py-2 rounded-lg'>
-                  Resume
-                </a>
-                <button onClick={() => setIsEdit(true)} className='text-gray-500 border border-gray-300 rounded-lg px-4 py-2'>
-                  Edit
+                <button onClick={updateResume} className='bg-green-100 border border-green-400 rounded-lg px-4 py-2 hover:bg-green-200 transition'>
+                  Save
                 </button>
+                {/* Cancel button to return to display mode */}
+                {userData.resume && (
+                  <button onClick={() => { setIsEdit(false); setResume(null); }} className='text-red-500 ml-2'>
+                    Cancel
+                  </button>
+                )}
               </div>
+              : <button onClick={() => setIsEdit(true)} className='text-gray-500 border border-gray-300 rounded-lg px-4 py-2 hover:bg-gray-50'>
+                  Update Resume
+                </button>
           }
         </div>
+        
         <h2 className='text-xl font-semibold mb-4'>Jobs Applied</h2>
         <table className='min-w-full bg-white border rounded-lg'>
           <thead>
@@ -92,7 +105,7 @@ const Applications = () => {
             </tr>
           </thead>
           <tbody>
-            {userApplications.map((job, index) => true ? (
+            {userApplications.map((job, index) => (
               <tr key={index}>
                 <td className='py-3 px-4 flex items-center gap-2 border-b'>
                   <img className='w-8 h-8' src={job.companyId.image} alt="" />
@@ -107,7 +120,7 @@ const Applications = () => {
                   </span>
                 </td>
               </tr>
-            ) : (null))}
+            ))}
           </tbody>
         </table>
       </div>
